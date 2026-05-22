@@ -9,7 +9,8 @@ app.use(cookieParser())
 app.use(cors({
     origin: [
         "http://localhost:5173",
-        "https://interview-ai-yt-main-6kgu.vercel.app"
+        "https://ats-checker-6asb.onrender.com"
+        
     ],
     credentials: true
 }));
