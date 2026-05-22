@@ -1,9 +1,11 @@
 import axios from "axios"
 
+console.log("API URL:", import.meta.env.VITE_API_URL)
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
-    withCredentials: true
+    withCredentials: true,
+    
 })
 
 export async function register({ username, email, password }) {
@@ -11,6 +13,8 @@ export async function register({ username, email, password }) {
     try {
         const response = await api.post('/api/auth/register', {
             username, email, password
+
+
         })
 
         return response.data
