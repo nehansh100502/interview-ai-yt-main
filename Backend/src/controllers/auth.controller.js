@@ -70,48 +70,69 @@ async function registerUserController(req, res) {
  * @access Public
  */
 async function loginUserController(req, res) {
+    try {
+        const { email, password } = req.body
 
-    const { email, password } = req.body
-
-    const user = await userModel.findOne({ email })
-
-    if (!user) {
-        return res.status(400).json({
-            message: "Invalid email or password"
-        })
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password)
-
-    if (!isPasswordValid) {
-        return res.status(400).json({
-            message: "Invalid email or password"
-        })
-    }
-
-    const token = jwt.sign(
-        { id: user._id, username: user.username },
-        process.env.JWT_SECRET,
-        { expiresIn: "1d" }
-    )
-
-    res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite:
-            process.env.NODE_ENV === "production"
-                ? "none"
-                : "lax",
-        maxAge: 24 * 60 * 60 * 1000
-    })
-        res.status(200).json({
-        message: "User loggedIn successfully.",
-        user: {
-            id: user._id,
-            username: user.username,
-            email: user.email
+        if (!email || !password) {
+            return res.status(400).json({
+                message: "Email and password required"
+            })
         }
-    })
+
+        const user = await userModel.findOne({ email })
+
+        if (!user) {
+            return res.status(400).json({
+                message: "Invalid email or password"
+            })
+        }
+
+        if (!user.password) {
+            return res.status(500).json({
+                message: "User password missing in DB"
+            })
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password)
+
+        if (!isPasswordValid) {
+            return res.status(400).json({
+                message: "Invalid email or password"
+            })
+        }
+
+        if (!process.env.JWT_SECRET) {
+            throw new Error("JWT_SECRET not defined in environment")
+        }
+
+        const token = jwt.sign(
+            { id: user._id, username: user.username },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+        )
+
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+            maxAge: 24 * 60 * 60 * 1000
+        })
+
+        return res.status(200).json({
+            message: "User logged in successfully",
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email
+            }
+        })
+
+    } catch (err) {
+        console.error("LOGIN ERROR:", err)
+        return res.status(500).json({
+            message: err.message
+        })
+    }
 }
 
 
